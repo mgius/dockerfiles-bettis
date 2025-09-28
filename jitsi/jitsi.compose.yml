@@ -1,6 +1,17 @@
 networks:
   meet.jitsi:
 
+volumes:
+  jitsi-web-config:
+  jitsi-web-crontabs:
+  jitsi-web-transcripts:
+  jitsi-web-load-test:
+  jitsi-prosody-config:
+  jitsi-prosody-plugins-custom:
+  jitsi-jicofo-config:
+  jitsi-jvb-config:
+
+
 services:
   jitsi-web:
     image: jitsi/web:${JITSI_IMAGE_VERSION:-unstable}
@@ -9,10 +20,10 @@ services:
     #   - '${HTTP_PORT}:80'
     #   - '${HTTPS_PORT}:443'
     volumes:
-      - ${CONFIG}/web:/config:Z
-      - ${CONFIG}/web/crontabs:/var/spool/cron/crontabs:Z
-      - ${CONFIG}/transcripts:/usr/share/jitsi-meet/transcripts:Z
-      - ${CONFIG}/web/load-test:/usr/share/jitsi-meet/load-test:Z
+      - jitsi-web-config:/config
+      - jitsi-web-crontabs:/var/spool/cron/crontabs
+      - jitsi-web-transcripts:/usr/share/jitsi-meet/transcripts
+      - jitsi-web-load-test:/usr/share/jitsi-meet/load-test
     labels:
       service: "jitsi-web"
     env_file: 
@@ -41,8 +52,8 @@ services:
     labels:
       service: "jitsi-prosody"
     volumes:
-      - ${CONFIG}/prosody/config:/config:Z
-      - ${CONFIG}/prosody/prosody-plugins-custom:/prosody-plugins-custom:Z
+      - jitsi-prosody-config:/config
+      - jitsi-prosody-plugins-custom:/prosody-plugins-custom
     networks:
       default:
       meet.jitsi:
@@ -57,7 +68,7 @@ services:
     # ports:
     #   - '127.0.0.1:${JICOFO_REST_PORT:-8888}:8888'
     volumes:
-      - ${CONFIG}/jicofo:/config:Z
+      - jitsi-jicofo-config:/config
     labels:
       service: "jitsi-jicofo"
     env_file: 
@@ -77,7 +88,7 @@ services:
       - '${JVB_PORT:-10000}:${JVB_PORT:-10000}/udp'
     #   - '127.0.0.1:${JVB_COLIBRI_PORT:-8080}:8080'
     volumes:
-      - ${CONFIG}/jvb:/config:Z
+      - jitsi-jvb-config:/config
     labels:
       service: "jitsi-jvb"
     env_file: 

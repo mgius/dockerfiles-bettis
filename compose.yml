@@ -21,6 +21,7 @@ services:
       # - 10000:10000/udp
       # - 40000-40100:40000-40100/udp
       # - 40000-40100:40000-40100/tcp
+    env_file: ./caddy-ingress/caddy.env
     volumes:
       - type: volume
         source: synology_shared

@@ -75,7 +75,7 @@ auth.markgius.com {
 
 fetch.markgius.com {
     authorize with loggedin
-    reverse_proxy http://fetch:8080
+    reverse_proxy http://fetch-server:8080
 }
 
 pihole.markgius.com {
