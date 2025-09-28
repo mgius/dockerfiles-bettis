@@ -134,7 +134,7 @@ meetings.markgius.com {
 #     # miserable so I probably won't leave this open but this method lets me hard
 #     # code a bearer token. so it's not just completely open.
 #     @ollamaAuth {
-# 		header Authorization "Bearer ZPSC0TY-VD8MAR0-GWN8AFX-PXZNE87"
+# 		header Authorization "Bearer {env.OLLAMA_BEARER_TOKEN}"
 # 	}
 # 
 #     # Proxy authorized requests
@@ -147,7 +147,7 @@ meetings.markgius.com {
 # 	# Define a matcher for unauthorized access
 # 	@unauthorized {
 # 		not {
-#             header Authorization "Bearer ZPSC0TY-VD8MAR0-GWN8AFX-PXZNE87"
+#             header Authorization "Bearer {env.OLLAMA_BEARER_TOKEN}"
 # 		}
 # 	}
 # 
