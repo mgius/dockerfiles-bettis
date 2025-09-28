@@ -1,0 +1,174 @@
+# some services are split into their own compose files for easier management
+# they may rely on shared volumes or networks defined here
+include:
+  - jitsi/jitsi.compose.yml
+  - immich/immich.compose.yml
+  - fetch/fetch.compose.yml
+  
+services:
+  caddy-ingress:
+    build:
+      context: ./caddy-ingress
+      dockerfile: Dockerfile
+      network: host
+    ports:
+      - 80:80
+      - 443:443
+      - 5000:5000
+      - 5001:5001
+      # optional ports for webRTC
+      # currently not working via caddy because caddy-l4 is confusing
+      # - 10000:10000/udp
+      # - 40000-40100:40000-40100/udp
+      # - 40000-40100:40000-40100/tcp
+    volumes:
+      - type: volume
+        source: synology_shared
+        target: /data
+        volume:
+          subpath: caddy-ingress/data
+      - ./write.markgius.com:/content/write.markgius.com
+    restart: unless-stopped
+
+  syncthing:
+    image: linuxserver/syncthing:2.0.2
+    # container_name: syncthing
+    hostname: syncthing #optional
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    volumes:
+      - type: volume
+        source: synology_shared
+        target: /config
+        volume:
+          subpath: syncthing/config
+
+      - type: volume
+        source: synology_shared
+        target: /data1
+        volume:
+          subpath: syncthing/data
+
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+
+  grafana:
+    image: grafana/grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+  jellyfin:
+    image: jellyfin/jellyfin
+    ports:
+      - 7359:7359
+    volumes:
+      - type: volume
+        source: jellyfin_config
+        target: /config
+      - type: volume
+        source: jellyfin_cache
+        target: /cache
+      - type: volume
+        source: videos
+        target: /media
+    devices:
+      - /dev/dri/renderD128:/dev/dri/renderD128
+    restart: 'unless-stopped'
+    environment:
+      - JELLYFIN_PublishedServerUrl=https://jellyfin.markgius.com
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - type: volume
+        source: ollama_data
+        target: /root/.ollama
+    restart: unless-stopped
+  anythingllm:
+    image: mintplexlabs/anythingllm
+    environment:
+      STORAGE_DIR: /app/server/storage
+    volumes:
+      - type: volume
+        source: anythingllm_storage
+        target: /app/server/storage
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    # For DHCP it is recommended to remove these ports and instead add: network_mode: "host"
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      # - "67:67/udp" # Only required if you are using Pi-hole as your DHCP server
+    environment:
+      TZ: 'America/Los_Angeles'
+      DNSMASQ_LISTENING: 'all'
+      ServerIP: '192.168.1.253'
+    # Volumes store your data between container upgrades
+    volumes:
+      - './etc-pihole:/etc/pihole'
+      - './etc-dnsmasq.d:/etc/dnsmasq.d'
+    #   https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
+    # cap_add:
+    #   - NET_ADMIN # Required if you are using Pi-hole as your DHCP server, else not needed
+    restart: unless-stopped
+
+  # mirotalksfu:
+  #   image: mirotalk/sfu:latest
+  #   container_name: mirotalksfu
+  #   hostname: mirotalksfu
+  #   restart: unless-stopped
+  #   # The following ports are only required if 'network_mode: host' is NOT enabled.
+  #   # If you enable 'network_mode: host', you can comment out or remove the 'ports' section below.
+  #   # network_mode: 'host'
+  #   ports:
+  #   #     - '3010:3010/tcp'
+  #       - '40000-40100:40000-40100/tcp'
+  #       - '40000-40100:40000-40100/udp'
+  #   volumes:
+  #       - ./mirotalk/config.js:/src/app/src/config.js:ro
+  #       - ./mirotalk/mirotalk.env:/src/.env:ro
+
+
+volumes:
+  # volumes for cache data that I would prefer not to recreate every boot but
+  # don't need to be backed up onto the NAS
+  jellyfin_cache:
+  prometheus_data: # TODO: make this a bind mount with a daily backup to the synology
+
+  jellyfin_config:
+  anythingllm_storage:
+  ollama_data:
+  grafana_data:
+
+  # strict read-only for videos
+  videos:
+    driver_opts:
+      type: 'nfs'
+      o: "addr=192.168.1.197,ro,vers=4.0,nconnect=16"
+      device: ":/volume1/video"
+
+  # read-write scratch drive for docker containers
+  synology_shared:
+    driver_opts:
+      type: 'nfs'
+      # force version 4 (docker prefers 3 for some reason?)
+      # force nconnect=16, otherwise jellyfin will have unacceptably low performance
+      o: "addr=192.168.1.197,relatime,vers=4.0,nconnect=16"
+      device: ":/volume1/docker"
+
+networks:
+  default:
+    ipam:
+      config:
+        # force a subnet that doesnt' conflict with any of the other networks I use
+        # this is mostly so that when I'm using tailscale I don't have conflicts
+        - subnet: 192.168.254.0/24
+          ip_range: 192.168.254.0/24
+          gateway: 192.168.254.254

@@ -1,0 +1,91 @@
+services:
+  immich-server:
+    container_name: immich_server
+    image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
+    networks:
+      default:
+      immich_net: 
+    environment:
+      DB_HOSTNAME: immich-database
+      REDIS_HOSTNAME: immich-redis
+    devices:
+      # enable quicksync hardware transcoding
+      - /dev/dri:/dev/dri
+    volumes:
+      # Do not edit the next line. If you want to change the media storage location on your system, edit the value of UPLOAD_LOCATION in the .env file
+      - immich-data:/data
+      - /etc/localtime:/etc/localtime:ro
+      - type: volume
+        source: old_synology_photos
+        target: /old_synology_photos
+    # ports:
+    #   - '2283:2283'
+    depends_on:
+      - immich-redis
+      - immich-database
+      - immich-machine-learning
+
+    restart: always
+    healthcheck:
+      disable: false
+
+  immich-machine-learning:
+    container_name: immich_machine_learning
+    networks:
+      immich_net:
+        # For hardware acceleration, add one of -[armnn, cuda, rocm, openvino, rknn] to the image tag.
+        # Example tag: ${IMMICH_VERSION:-release}-cuda
+    image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION:-release}-openvino
+    device_cgroup_rules:
+      - 'c 189:* rmw'
+    devices:
+      - /dev/dri:/dev/dri
+    volumes:
+      - /dev/bus/usb:/dev/bus/usb
+      - immich-model-cache:/cache
+    restart: always
+    healthcheck:
+      disable: false
+
+  immich-redis:
+    container_name: immich_redis
+    image: docker.io/valkey/valkey:8-bookworm@sha256:fea8b3e67b15729d4bb70589eb03367bab9ad1ee89c876f54327fc7c6e618571
+    networks:
+      immich_net:
+
+    healthcheck:
+      test: redis-cli ping || exit 1
+    restart: always
+
+  immich-database:
+    container_name: immich_postgres
+    image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0@sha256:8d292bdb796aa58bbbaa47fe971c8516f6f57d6a47e7172e62754feb6ed4e7b0
+    networks:
+      immich_net:
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_DB: ${DB_DATABASE_NAME:-immich}
+      POSTGRES_INITDB_ARGS: '--data-checksums'
+      # Uncomment the DB_STORAGE_TYPE: 'HDD' var if your database isn't stored on SSDs
+      # DB_STORAGE_TYPE: 'HDD'
+    volumes:
+      # Do not edit the next line. If you want to change the database storage location on your system, edit the value of DB_DATA_LOCATION in the .env file
+      - immich_db_data:/var/lib/postgresql/data
+    shm_size: 128mb
+    restart: always
+  
+networks:
+  immich_net:
+
+volumes:
+  immich_db_data:
+  immich-model-cache: # temporary volume for immich data before I wire it up to the NAS
+  immich-data:
+
+  old_synology_photos:
+    driver_opts:
+      type: 'nfs'
+      o: "addr=192.168.1.197,ro,vers=4.0,nconnect=16"
+      device: ":/volume1/photo"
+

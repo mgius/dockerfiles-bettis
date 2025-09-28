@@ -1,0 +1,163 @@
+{
+    # debug
+    # caddy says its good to have an email address here.  *shrug*
+    email webmaster@markgius.com
+    metrics {
+        per_host
+    }
+    admin :2019 {
+    }
+
+    order authenticate before respond
+    order authorize before basicauth
+
+    security {
+        oauth identity provider github {env.OAUTH_CLIENT_ID} {env.OAUTH_CLIENT_SECRET}
+
+        local identity store Login {
+            realm Login
+            path /tmp/empty.json
+            user pack377 {
+                email pack377@markgius.com
+                password {env.STATIC_USER_PASSWORD}
+                roles authp/user
+            }
+        }
+
+        authentication portal myportal {
+            enable identity provider github
+            enable identity store Login
+            crypto key sign-verify {env.JWT_SHARED_KEY}
+            cookie domain .markgius.com
+            ui {
+                links {
+                    "Synology" https://home.markgius.com
+                }
+            }
+            transform user {
+                exact match sub github.com/mgius
+                action add role authp/admin
+                action add role admin
+            }
+        }
+
+        authorization policy loggedin {
+            set auth url https://auth.markgius.com
+            crypto key verify {env.JWT_SHARED_KEY}
+            allow roles authp/admin authp/user
+            validate bearer header
+            inject headers with claims
+        }
+    }
+}
+
+(only_allow_in_network) {
+    @denied not client_ip private_ranges
+    abort @denied
+}
+
+# DS android applications (except for Photos) use port 5000 for http and 5001 for https
+# I'm making visible for https only.
+home.markgius.com:5001 {
+    # except for some asinine reason the app wants port 5001 but the server wants it on standard ports
+    reverse_proxy http://192.168.1.197
+}
+
+# Web frontend for synology and ds photos
+home.markgius.com {
+    reverse_proxy http://192.168.1.197 
+}
+
+# the main auth endpoint
+auth.markgius.com {
+    authenticate with myportal
+}
+
+fetch.markgius.com {
+    authorize with loggedin
+    reverse_proxy http://fetch:8080
+}
+
+pihole.markgius.com {
+    authorize with loggedin
+
+    reverse_proxy http://pihole {
+        # pihole gets cranky unless the host header matches what it expects
+        header_up Host {upstream_hostport}
+    }
+}
+
+syncthing.markgius.com {
+   authorize with loggedin
+   reverse_proxy syncthing:8384
+}
+
+# prometheus.markgius.com {
+#    authorize with loggedin
+#    reverse_proxy prometheus:9090
+# }
+
+# grafana.markgius.com {
+#     authorize with loggedin
+#     reverse_proxy http://grafana:3000
+# }
+
+jellyfin.markgius.com {
+    reverse_proxy http://jellyfin:8096
+}
+
+# llm.markgius.com {
+#     reverse_proxy http://anythingllm:3001
+# }
+
+photos.markgius.com {
+    reverse_proxy http://immich_server:2283
+}
+
+meetings.markgius.com {
+    authorize with loggedin
+    
+    reverse_proxy /xmpp-websocket* http://prosody:5280
+
+    reverse_proxy http://jitsi-web
+}
+
+# meetings.markgius.com {
+#     authorize with loggedin
+#     reverse_proxy http://mirotalksfu:3010
+# }
+
+# if I want to directly expose models to VSCode via continue.dev, I have to make ollama public.
+# ollama.markgius.com {
+#     # ollama doesn't support auth, and continue doesn't support oauth logins so I can't use caddy-security.  
+#     # the performance of this for Agent, Chat and Tab Complete is pretty
+#     # miserable so I probably won't leave this open but this method lets me hard
+#     # code a bearer token. so it's not just completely open.
+#     @ollamaAuth {
+# 		header Authorization "Bearer ZPSC0TY-VD8MAR0-GWN8AFX-PXZNE87"
+# 	}
+# 
+#     # Proxy authorized requests
+# 	reverse_proxy @ollamaAuth http://ollama:11434 {
+# 		header_up Host {http.reverse_proxy.upstream.hostport}
+# 	}
+# 
+#     # I pulled this from some example I'm pretty sure if I just put repond 401
+#     # close here it would work becaues prior requests are more prioritized
+# 	# Define a matcher for unauthorized access
+# 	@unauthorized {
+# 		not {
+#             header Authorization "Bearer ZPSC0TY-VD8MAR0-GWN8AFX-PXZNE87"
+# 		}
+# 	}
+# 
+# 	# Respond to unauthorized access
+# 	respond @unauthorized "Unauthorized" 401 {
+# 		close
+# 	}
+# }
+
+write.markgius.com {
+    root * /content/write.markgius.com/
+    file_server
+}
