@@ -11,5 +11,6 @@ FROM caddy:${CADDY_VERSION}-alpine
 
 COPY --from=builder /usr/bin/caddy /usr/bin/caddy
 COPY ./conf/Caddyfile /etc/caddy/Caddyfile
+COPY ./conf/users.json /etc/caddy/users.json
 
 RUN caddy validate --config /etc/caddy/Caddyfile

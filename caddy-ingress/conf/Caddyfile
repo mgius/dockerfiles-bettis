@@ -16,12 +16,7 @@
 
         local identity store Login {
             realm Login
-            path /tmp/empty.json
-            user pack377 {
-                email pack377@markgius.com
-                password {env.STATIC_USER_PASSWORD}
-                roles authp/user
-            }
+            path /etc/caddy/users.json
         }
 
         authentication portal myportal {
