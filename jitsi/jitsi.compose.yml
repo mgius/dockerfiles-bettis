@@ -10,6 +10,7 @@ volumes:
   jitsi-prosody-plugins-custom:
   jitsi-jicofo-config:
   jitsi-jvb-config:
+  jitsi-transcriber:
 
 
 services:
@@ -36,6 +37,7 @@ services:
       - jvb
       - jicofo
       - prosody
+      - transcriber
 
   # XMPP server
   prosody:
@@ -59,6 +61,12 @@ services:
       meet.jitsi:
         # aliases:
         #   - ${XMPP_SERVER:-xmpp.meet.jitsi}
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/healthcheck.sh"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 2s
 
   # Focus component
   # jitsi-conference-focus
@@ -98,3 +106,24 @@ services:
       - prosody
     networks:
       meet.jitsi:
+
+  # Vosk speech-to-text server
+  vosk:
+    image: alphacep/kaldi-en:latest
+    networks:
+      meet.jitsi:
+
+  transcriber:
+      image: jitsi/jigasi:${JITSI_IMAGE_VERSION:-unstable}
+      env_file: 
+        - ./jitsi.env
+        - ./jitsi-passwords.env
+      restart: ${RESTART_POLICY:-unless-stopped}
+      volumes:
+          - jitsi-transcriber:/config
+          - ./transcripts:/tmp/transcripts:Z
+      depends_on:
+          - prosody
+          - vosk
+      networks:
+          meet.jitsi:
