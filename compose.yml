@@ -11,6 +11,8 @@ services:
       context: ./caddy-ingress
       dockerfile: Dockerfile
       network: host
+      args:
+        CADDY_VERSION: ${CADDY_VERSION}
     ports:
       - 80:80
       - 443:443
@@ -32,8 +34,7 @@ services:
     restart: unless-stopped
 
   syncthing:
-    image: linuxserver/syncthing:2.0.2
-    # container_name: syncthing
+    image: linuxserver/syncthing:${SYNCTHING_VERSION}
     hostname: syncthing #optional
     environment:
       - PUID=1000
@@ -55,18 +56,18 @@ services:
     restart: unless-stopped
 
   prometheus:
-    image: prom/prometheus
+    image: prom/prometheus:${PROMETHEUS_VERSION}
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
 
   grafana:
-    image: grafana/grafana
+    image: grafana/grafana:${GRAFANA_VERSION}
     volumes:
       - grafana_data:/var/lib/grafana
 
   jellyfin:
-    image: jellyfin/jellyfin
+    image: jellyfin/jellyfin:${JELLYFIN_VERSION}
     ports:
       - 7359:7359
     volumes:
@@ -101,7 +102,7 @@ services:
         target: /app/server/storage
   pihole:
     container_name: pihole
-    image: pihole/pihole:latest
+    image: pihole/pihole:${PIHOLE_VERSION}
     # For DHCP it is recommended to remove these ports and instead add: network_mode: "host"
     ports:
       - "53:53/tcp"
