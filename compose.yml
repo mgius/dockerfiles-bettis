@@ -85,21 +85,23 @@ services:
     restart: 'unless-stopped'
     environment:
       - JELLYFIN_PublishedServerUrl=https://jellyfin.markgius.com
-  ollama:
-    image: ollama/ollama:latest
-    volumes:
-      - type: volume
-        source: ollama_data
-        target: /root/.ollama
-    restart: unless-stopped
-  anythingllm:
-    image: mintplexlabs/anythingllm
-    environment:
-      STORAGE_DIR: /app/server/storage
-    volumes:
-      - type: volume
-        source: anythingllm_storage
-        target: /app/server/storage
+
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   volumes:
+  #     - type: volume
+  #       source: ollama_data
+  #       target: /root/.ollama
+  #   restart: unless-stopped
+  # anythingllm:
+  #   image: mintplexlabs/anythingllm
+  #   environment:
+  #     STORAGE_DIR: /app/server/storage
+  #   volumes:
+  #     - type: volume
+  #       source: anythingllm_storage
+  #       target: /app/server/storage
+
   pihole:
     container_name: pihole
     image: pihole/pihole:${PIHOLE_VERSION}
