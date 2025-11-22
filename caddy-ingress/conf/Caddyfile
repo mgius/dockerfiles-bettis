@@ -83,7 +83,7 @@ pihole.markgius.com {
 }
 
 syncthing.markgius.com {
-   authorize with loggedin
+#    authorize with loggedin
    reverse_proxy syncthing:8384
 }
 
