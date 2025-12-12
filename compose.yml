@@ -4,6 +4,7 @@ include:
   - jitsi/jitsi.compose.yml
   - immich/immich.compose.yml
   - fetch/fetch.compose.yml
+  - minecraft/minecraft.compose.yml
   
 services:
   caddy-ingress:

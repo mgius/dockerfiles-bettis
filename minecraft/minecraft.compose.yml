@@ -1,0 +1,36 @@
+volumes:
+  minecraft-gius-family-server-data:
+
+services:
+  minecraft-gius-family-server:
+    image: itzg/minecraft-bedrock-server:2025.11.0
+    container_name: minecraft-gius-family-server
+    environment:
+      EULA: "TRUE"
+      GAMEMODE: "survival"
+      DIFFICULTY: "peaceful"
+      ALLOW_CHEATS: "false"
+      MAX_PLAYERS: 10
+      SERVER_NAME: "Gius Family Server"
+      SERVER_PORT: 19132
+      LEVEL_NAME: "BedrockWorld"
+      ONLINE_MODE: "true"
+      VIEW_DISTANCE: 10
+      TICK_DISTANCE: 10
+      WHITE_LIST: "false"
+      DOWNLOAD_DIR: /data/downloads
+      ENABLE_LAN_VISIBILITY: "true"
+      CHAT_RESTRICTION: "Disabled"
+      
+      # DEFAULT_PLAYER_PERMISSION_LEVEL
+      # SERVER_AUTHORITATIVE_MOVEMENT
+      # CORRECT_PLAYER_MOVEMENT
+
+    ports:
+      - "19132:19132/udp"
+    volumes:
+      - type: volume
+        source: minecraft-gius-family-server-data
+        target: /data
+    restart: unless-stopped
+ 
