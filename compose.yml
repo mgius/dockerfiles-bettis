@@ -157,7 +157,7 @@ volumes:
     driver_opts:
       type: 'nfs'
       o: "addr=192.168.1.197,ro,vers=4.0,nconnect=16"
-      device: ":/volume1/video"
+      device: ":/volume2/video"
 
   # read-write scratch drive for docker containers
   synology_shared:
