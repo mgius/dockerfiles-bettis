@@ -13,7 +13,7 @@ services:
       - /dev/dri:/dev/dri
     volumes:
       # Do not edit the next line. If you want to change the media storage location on your system, edit the value of UPLOAD_LOCATION in the .env file
-      - immich-data:/data
+      - immich-synology:/data
       - /etc/localtime:/etc/localtime:ro
       - type: volume
         source: old_synology_photos
@@ -71,7 +71,7 @@ services:
       # DB_STORAGE_TYPE: 'HDD'
     volumes:
       # Do not edit the next line. If you want to change the database storage location on your system, edit the value of DB_DATA_LOCATION in the .env file
-      - immich_db_data:/var/lib/postgresql/data
+      - immich_new_db_data:/var/lib/postgresql/data
     shm_size: 128mb
     restart: unless-stopped
   
@@ -80,12 +80,18 @@ networks:
 
 volumes:
   immich_db_data:
+  immich_new_db_data:
   immich-model-cache: # temporary volume for immich data before I wire it up to the NAS
-  immich-data:
+  immich-data: # previous local copy delete later
+  immich-synology:
+    driver_opts:
+      type: 'nfs'
+      o: "addr=192.168.1.197,vers=4.0,nconnect=16"
+      device: ":/volume2/immich"
 
   old_synology_photos:
     driver_opts:
       type: 'nfs'
       o: "addr=192.168.1.197,ro,vers=4.0,nconnect=16"
-      device: ":/volume1/photo"
+      device: ":/volume2/photo"
 

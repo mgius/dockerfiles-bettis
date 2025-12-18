@@ -44,12 +44,48 @@
             inject headers with claims
         }
     }
+
+    layer4 {
+        # listen on tcp port 6690
+        # :6690 {
+            # # match requests with tls SNI home.markgius.com
+            # @home_markgius_encrypted tls sni home.markgius.com
+            # route @home_markgius_encrypted {
+            #     proxy {
+            #         upstream {
+            #             # send it to the synology
+            #             dial 192.168.1.197:6690
+            #             # use tls
+            #             tls
+            #             # ignore tls verification errors
+            #             tls_insecure_skip_verify
+            #         }
+            #     }
+            # }
+
+            # route {
+            #     proxy localhost:16900
+            # }
+        # }
+
+        # Listen on port 6690 (The Drive Client Port)
+        :6690 {
+            route {
+                # Forward the raw TCP stream to your NAS IP
+                # Do NOT terminate TLS.
+                proxy {
+                    upstream 192.168.1.197:6690
+                }
+            }
+        }
+    }
 }
 
 (only_allow_in_network) {
     @denied not client_ip private_ranges
     abort @denied
 }
+
 
 # DS android applications (except for Photos) use port 5000 for http and 5001 for https
 # I'm making visible for https only.
