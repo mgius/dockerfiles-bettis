@@ -153,6 +153,10 @@ meetings.markgius.com {
     reverse_proxy http://jitsi-web
 }
 
+minecraftmap.markgius.com {
+    reverse_proxy http://minecraft-bluemap:8100
+}
+
 # meetings.markgius.com {
 #     authorize with loggedin
 #     reverse_proxy http://mirotalksfu:3010

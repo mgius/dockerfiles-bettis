@@ -1,5 +1,7 @@
 volumes:
   minecraft-gius-family-server-data:
+  minecraft-bluemap-web:
+    
 
 services:
   minecraft-gius-family-server:
@@ -21,6 +23,7 @@ services:
       DOWNLOAD_DIR: /data/downloads
       ENABLE_LAN_VISIBILITY: "true"
       CHAT_RESTRICTION: "Disabled"
+      ENABLE_SSH: "true"
       
       # DEFAULT_PLAYER_PERMISSION_LEVEL
       # SERVER_AUTHORITATIVE_MOVEMENT
@@ -33,4 +36,48 @@ services:
         source: minecraft-gius-family-server-data
         target: /data
     restart: unless-stopped
- 
+  
+  minecraft-backup:
+    image: kaiede/minecraft-bedrock-backup
+    restart: unless-stopped
+    depends_on:
+      minecraft-gius-family-server:
+        condition: "service_healthy"
+    environment:
+      TZ: "America/Los_Angeles"
+    volumes:
+      - type: volume
+        source: synology_shared
+        target: /data
+        volume: 
+          subpath: minecraft/backups
+      - type: volume
+        source: minecraft-gius-family-server-data
+        target: /source
+      - type: bind
+        source: ./backup/config.yml
+        target: /data/config.yml
+        read_only: true
+
+  minecraft-bluemap:
+    build:
+      dockerfile: ./Dockerfile.bluemap
+      target: chunker
+    volumes:
+      - type: volume
+        source: synology_shared
+        target: /backups
+        volume: 
+          subpath: minecraft/backups
+      - type: bind
+        source: ./bluemap/config
+        target: /output/config
+      - type: bind
+        source: ./bluemap/data
+        target: /output/data
+      - type: volume
+        source: minecraft-bluemap-web
+        target: /output/web
+    environment:
+      BACKUP_FOLDER: /backups
+      WORLD_FOLDER: /output/world

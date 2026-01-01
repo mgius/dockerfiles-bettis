@@ -1,0 +1,20 @@
+schedule:
+  # whenever the last person logs out
+  onLastLogout: true
+  # no more than every three hours
+  # minInterval: 3h
+  # and at least once daily
+  daily: 01:00
+
+trim:
+  trimDays: 2  # all backups for 2 days
+  keepDays: 14 # one per day for 14 days
+  minDays: 2 # at least two backups no matter what
+
+containers:
+  bedrock:
+    - name: minecraft-gius-family-server
+      ssh: minecraft-gius-family-server:2222
+      passwordFile: /source/.remote-console.yaml
+      worlds:
+        - /source/worlds/BedrockWorld

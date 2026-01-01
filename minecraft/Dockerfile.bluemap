@@ -1,0 +1,19 @@
+FROM amazoncorretto:25 AS base
+
+RUN dnf install -y vim-enhanced 7zip
+COPY ./jars/chunker-cli-1.14.0.jar /root/
+COPY ./jars/bluemap-5.15-cli.jar /root/
+
+WORKDIR /output
+
+FROM base AS bluemap
+
+ENTRYPOINT ["java", "-jar", "/root/bluemap-5.15-cli.jar"]
+
+FROM base AS chunker
+
+ENV CHUNKER_JARFILE=/root/chunker-cli-1.14.0.jar
+ENV BLUEMAP_JARFILE=/root/bluemap-5.15-cli.jar
+COPY --chmod=544 ./chunker-entrypoint.sh /
+
+ENTRYPOINT ["/chunker-entrypoint.sh"]
