@@ -157,6 +157,11 @@ minecraftmap.markgius.com {
     reverse_proxy http://minecraft-bluemap:8100
 }
 
+minecraft.markgius.com {
+    authorize with loggedin
+    reverse_proxy http://minecraft-bsm:11325
+}
+
 # meetings.markgius.com {
 #     authorize with loggedin
 #     reverse_proxy http://mirotalksfu:3010

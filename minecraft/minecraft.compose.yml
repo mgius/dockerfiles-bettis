@@ -1,9 +1,30 @@
 volumes:
   minecraft-gius-family-server-data:
   minecraft-bluemap-web:
+  minecraft-bsm-data:
     
 
 services:
+  minecraft-bsm:
+    build:
+      dockerfile: ./Dockerfile.bsm
+    # image: dmedina559/bedrock-server-manager:stable
+    environment:
+      - BEDROCK_SERVER_MANAGER_NO_AUTH=true
+      - PORT=11325
+    ports:
+      - "11325:11325"          # Web UI Port
+      - "19132:19132/udp"      # Main Minecraft Port
+    volumes:
+      - ./bsm_config:/root/.config/bedrock-server-manager
+      - minecraft-bsm-data:/root/bedrock-server-manager
+      - type: volume
+        source: synology_shared
+        target: /synology
+        volume: 
+          subpath: minecraft
+    restart: unless-stopped
+
   minecraft-gius-family-server:
     image: itzg/minecraft-bedrock-server:2025.11.0
     container_name: minecraft-gius-family-server

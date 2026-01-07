@@ -16,11 +16,12 @@ mkdir ${WORLD_FOLDER}
 OUTPUT_FORMAT=JAVA_1_21
 
 # find the most recent backup in the backups folder
-MOST_RECENT_FILE=$(ls -t $BACKUP_FOLDER/*.mcworld | head -n1)
+# MOST_RECENT_FILE=$(ls -t $BACKUP_FOLDER/*.mcworld | head -n1)
+MOST_RECENT_FILE=$(find $BACKUP_FOLDER -type f -name '*.mcworld' -printf '%T@ %p\0' | sort -zrn | sed -Ezn '1s/[^ ]* //p')
 
 # extract the most recent backup into a temp folder
 EXTRACT_FOLDER=$(mktemp -d)
-7z x -o${EXTRACT_FOLDER} ${MOST_RECENT_FILE}
+7z x -o${EXTRACT_FOLDER} "${MOST_RECENT_FILE}"
 
 # run chunker on it to convert to a java style minecraft world and dump it into
 # the world folder

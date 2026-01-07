@@ -1,6 +1,6 @@
 FROM amazoncorretto:25 AS base
 
-RUN dnf install -y vim-enhanced 7zip
+RUN dnf install -y vim-enhanced 7zip findutils
 COPY ./jars/chunker-cli-1.14.0.jar /root/
 COPY ./jars/bluemap-5.15-cli.jar /root/
 

@@ -72,6 +72,7 @@ services:
     image: jellyfin/jellyfin:${JELLYFIN_VERSION}
     ports:
       - 7359:7359
+      - 8096:8096
     volumes:
       - type: volume
         source: jellyfin_config
